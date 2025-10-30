@@ -1,0 +1,27 @@
+[Unit]
+Description=MinIO Console Web UI
+Documentation=https://min.io/docs/minio/linux/operations/console.html
+After=network-online.target
+Wants=network-online.target
+ConditionFileNotEmpty=/etc/default/minio-console
+
+[Service]
+User=minio-user
+Group=minio-user
+EnvironmentFile=-/etc/default/minio-console
+ExecStart=/usr/bin/minio-console server $CONSOLE_OPTS
+WorkingDirectory=/var/lib/minio-console
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+CapabilityBoundingSet=
+AmbientCapabilities=
+LimitNOFILE=65536
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
