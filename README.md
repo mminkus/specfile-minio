@@ -1,80 +1,220 @@
-# Specfile for MinIO server
+# Specfiles for MinIO Server, Client, and Console
 
-![Release Status](https://img.shields.io/badge/status-beta-yellow.svg)
+![Release Status](https://img.shields.io/badge/status-production-green.svg)
 [![License](https://img.shields.io/badge/License-MPL--2.0-blue.svg)](https://spdx.org/licenses/MPL-2.0.html)
 
 [![MinIO](https://raw.githubusercontent.com/minio/minio/master/.github/logo.svg?sanitize=true)](https://min.io)
 
-MinIO is a open source, S3 compatible, enterprise hardened and high performance distributed object storage system.
+MinIO is an open source, S3 compatible, enterprise hardened and high performance distributed object storage system.
 * Official Site: https://min.io
 * GitHub Sites:
   * https://github.com/minio/minio
   * https://github.com/minio/mc
+  * https://github.com/minio/object-browser
 
-This repository contains the *specfile*s that you can use to build MinIO server and client from the sources.
+This repository contains RPM *specfile*s for building MinIO server, client (mc), and console (object-browser) from source.
+
+Since MinIO no longer provides pre-built binaries, these specfiles allow you to build your own RPM packages from source with the latest releases.
+
+## Versions
+
+| Package | Version | Commit | Release Date |
+|---------|---------|--------|--------------|
+| MinIO Server | RELEASE.2025-10-15T17-29-55Z | 9e49d5e7 | 2025-10-15 |
+| MinIO Client (mc) | RELEASE.2025-08-13T08-35-41Z | 7394ce0d | 2025-08-13 |
+| MinIO Console | v1.7.6 | f4a08fc0 | Pre-feature-removal version |
+
+## Features
+
+- ✅ **Custom Branding**: Optionally customize the release tag prefix (e.g., for internal builds)
+- ✅ **Latest Releases**: Updated to most recent stable versions
+- ✅ **Systemd Integration**: Uses official MinIO systemd unit files
+- ✅ **Standard Paths**: `/etc/default/` for configs, `minio-user` for service account
+- ✅ **Security Fixes**: Includes critical security patches
+- ✅ **Automated Scripts**: Build automation and update checking included
 
 ## Usage
 
-### Pre-Requiments
+### Prerequisites
 
-    sudo dnf install -y rpm-build golang git
-    
-Note that *git 2.x* is required (tested with version 2.25.1 on Fedora 31 and with *git* provided by the *WANDisco's CentOS repository* on CentOS7, see [stackoverflow](https://stackoverflow.com/questions/21820715/how-to-install-latest-version-of-git-on-centos-7-x-6-x)).
+```bash
+sudo dnf install -y rpm-build golang git nodejs make
+```
 
-### Build instructions
+**Note**:
+- Git 2.x is required
+- Node.js 18+ is required for building MinIO Console
+- Go 1.7+ is required
 
-#### MinIO server
+### Build Instructions
 
-    mkdir -p ~/rpmbuild/{SPECS,SOURCES}
-    
-    for f in minio.conf minio.service; do
-      curl -# https://raw.githubusercontent.com/madrisan/specfile-minio/master/$f \
-        -o ~/rpmbuild/SOURCES/$f
-    done
-    curl -# https://raw.githubusercontent.com/madrisan/specfile-minio/master/minio.spec \
-        -o ~/rpmbuild/SPECS/minio.spec
-    
-    curl -# -L https://github.com/minio/minio/archive/RELEASE.2020-03-14T02-21-58Z.tar.gz \
-        -o ~/rpmbuild/SOURCES/RELEASE.2020-03-14T02-21-58Z.tar.gz
-    
-    rpmbuild -ba ~/rpmbuild/SPECS/minio.spec
+#### Setup Build Environment
 
-#### Minio client (minio-mc)
+```bash
+mkdir -p ~/rpmbuild/{SPECS,SOURCES}
+```
 
-    mkdir -p ~/rpmbuild/{SPECS,SOURCES}
-    
-    curl -# https://raw.githubusercontent.com/madrisan/specfile-minio/master/mc.spec \
-        -o ~/rpmbuild/SPECS/minio-mc.spec
-    
-    curl -# -L https://github.com/minio/minio/archive/RELEASE.2020-03-14T01-23-37Z.tar.gz \
-        -o ~/rpmbuild/SOURCES/RELEASE.2020-03-14T01-23-37Z.tar.gz
-    
-    rpmbuild -ba ~/rpmbuild/SPECS/minio-mc.spec
+#### MinIO Server
 
-Note that the binary has been renamed from `mc` to `minio-mc` to avoid a conflict name with the *Midnight Commander* binary.
+```bash
+# Copy spec and source files
+cp minio.spec ~/rpmbuild/SPECS/
+cp minio.service minio.conf ~/rpmbuild/SOURCES/
+
+# Download source tarball
+curl -L https://github.com/minio/minio/archive/RELEASE.2025-10-15T17-29-55Z.tar.gz \
+    -o ~/rpmbuild/SOURCES/RELEASE.2025-10-15T17-29-55Z.tar.gz
+
+# Build (uses RELEASE prefix by default)
+rpmbuild -ba ~/rpmbuild/SPECS/minio.spec
+
+# Or build with custom branding for internal use
+rpmbuild -ba --define 'release_prefix CUSTOM' ~/rpmbuild/SPECS/minio.spec
+```
+
+**Result**: Binary installed to `/usr/sbin/minio`
+
+#### MinIO Client (mc)
+
+```bash
+# Copy spec file
+cp minio-mc.spec ~/rpmbuild/SPECS/
+
+# Download source tarball
+curl -L https://github.com/minio/mc/archive/RELEASE.2025-08-13T08-35-41Z.tar.gz \
+    -o ~/rpmbuild/SOURCES/RELEASE.2025-08-13T08-35-41Z.tar.gz
+
+# Build (uses RELEASE prefix by default)
+rpmbuild -ba ~/rpmbuild/SPECS/minio-mc.spec
+
+# Or build with custom branding for internal use
+rpmbuild -ba --define 'release_prefix CUSTOM' ~/rpmbuild/SPECS/minio-mc.spec
+```
+
+**Result**: Binary installed to `/usr/bin/mcli`
+
+#### MinIO Console (Object Browser)
+
+```bash
+# Copy spec file
+cp minio-console.spec ~/rpmbuild/SPECS/
+
+# Download source tarball
+curl -L https://github.com/minio/object-browser/archive/refs/tags/v1.7.6.tar.gz \
+    -o ~/rpmbuild/SOURCES/v1.7.6.tar.gz
+
+# Build (uses RELEASE prefix by default)
+rpmbuild -ba ~/rpmbuild/SPECS/minio-console.spec
+
+# Or build with custom branding for internal use
+rpmbuild -ba --define 'release_prefix CUSTOM' ~/rpmbuild/SPECS/minio-console.spec
+```
+
+**Result**: Binary installed to `/usr/bin/minio-console`
+
+**Note**: This uses v1.7.6 from object-browser, the last version before features were removed in the community edition.
 
 ### Installation
 
-The resulting *.rpm* packages can be installed with `rpm` of `dnf`.
+Install the resulting RPM packages:
 
-Before starting the *systemd* service `minio.service` you need to customize the configuration file `/etc/sysconfig/minio`.
-The volumes managed by MinIO must be configured in the variable `MINIO_VOLUMES`.
-You can optionally pass some extra options at service startup by modifying the variable `MINIO_OPTIONS`.
-
-To improve the security you should also create the file `/etc/systemd/system/minio.service.d/environment.conf`owned by *root*, with a file mode `0640`, declaring the following two secrets:
-```
-[Service]
-Environment=MINIO_ACCESS_KEY=ADD_A_KEY_HERE
-Environment=MINIO_SECRET_KEY=ADD_A_SECRET_HERE
+```bash
+sudo dnf install ~/rpmbuild/RPMS/x86_64/minio-*.rpm
+sudo dnf install ~/rpmbuild/RPMS/x86_64/mcli-*.rpm
+sudo dnf install ~/rpmbuild/RPMS/x86_64/minio-console-*.rpm
 ```
 
-Here's a simple way to generate a random character sequence:
-```
-cat /dev/urandom | tr -dc '0-9a-zA-Z-._' | head -c 24; echo
+### Configuration
+
+#### MinIO Server
+
+1. **Configure volumes** in `/etc/default/minio`:
+   ```bash
+   MINIO_VOLUMES="/data"
+   MINIO_OPTS=""
+   ```
+
+2. **Set credentials** via systemd override (more secure than environment file):
+   ```bash
+   sudo mkdir -p /etc/systemd/system/minio.service.d
+   sudo tee /etc/systemd/system/minio.service.d/credentials.conf <<EOF
+   [Service]
+   Environment=MINIO_ROOT_USER=admin
+   Environment=MINIO_ROOT_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 32)
+   EOF
+   sudo chmod 600 /etc/systemd/system/minio.service.d/credentials.conf
+   ```
+
+3. **Create data directory**:
+   ```bash
+   sudo mkdir -p /data
+   sudo chown minio-user:minio-user /data
+   ```
+
+4. **Start the service**:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now minio.service
+   sudo systemctl status minio.service
+   ```
+
+#### MinIO Console
+
+1. **Configure console** in `/etc/default/minio-console`:
+   ```bash
+   CONSOLE_OPTS="--address :9090 --console-minio-server http://127.0.0.1:9000"
+   ```
+
+2. **Start the service**:
+   ```bash
+   sudo systemctl enable --now minio-console.service
+   sudo systemctl status minio-console.service
+   ```
+
+Access the web UI at `http://your-server:9090`
+
+## Custom Release Branding
+
+These specfiles support custom release tag prefixes for internal or organizational builds:
+
+```bash
+# Build with custom branding
+rpmbuild -ba --define 'release_prefix MYORG' ~/rpmbuild/SPECS/minio.spec
+
+# Verify the version
+minio --version
+# Output: minio version MYORG.2025-10-15T17-29-55Z (commit-id=9e49d5e7...)
 ```
 
-### Security
+The `release_prefix` variable defaults to `RELEASE` and can be set to any value (e.g., INTERNAL, STAGING, PRODUCTION, etc.).
 
-See the official documentation pages:
- * https://docs.min.io/docs/minio-server-configuration-guide.html
- * https://docs.min.io/docs/how-to-secure-access-to-minio-server-with-tls.html
+## Key Changes from Original Specfiles
+
+- ✅ Updated MinIO server to RELEASE.2025-10-15T17-29-55Z (from 2020)
+- ✅ Updated MinIO client to RELEASE.2025-08-13T08-35-41Z (from 2020)
+- ✅ Added MinIO Console (object-browser v1.7.6)
+- ✅ Changed service user from `minio` to `minio-user` (matches official MinIO)
+- ✅ Changed config location from `/etc/sysconfig` to `/etc/default` (matches official MinIO)
+- ✅ Updated systemd service file to match official MinIO service
+- ✅ Changed variable names: `MINIO_OPTIONS` → `MINIO_OPTS`
+- ✅ Renamed package and binary from `mc` to `mcli` (matches official naming, avoids Midnight Commander conflict)
+- ✅ Added configurable release prefix for custom branding
+
+## Security
+
+For production deployments:
+
+1. **Use TLS/SSL**: Configure certificates in `/var/lib/minio/.minio/certs/`
+2. **Strong Credentials**: Use long, random passwords for MINIO_ROOT_USER/PASSWORD
+3. **Firewall**: Restrict access to ports 9000 (S3 API) and 9090 (Console)
+4. **Updates**: Regularly update to latest releases for security patches
+
+See the official documentation:
+ * https://docs.min.io/
+ * https://min.io/docs/minio/linux/operations/network-encryption.html
+
+## License
+
+MinIO software is licensed under GNU AGPLv3.
+
+These spec files are provided as-is for building MinIO from source.
