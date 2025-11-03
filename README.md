@@ -48,13 +48,38 @@ sudo dnf install -y rpm-build golang git nodejs make
 
 ### Build Instructions
 
-#### Setup Build Environment
+#### Automated Build (Recommended)
+
+The easiest way to build all three packages is using the automated build script:
+
+```bash
+# Build all packages with default RELEASE prefix
+./build-all.sh
+
+# Build with custom branding
+./build-all.sh SONIC
+
+# Build without checking RPM dependencies (useful on Ubuntu/Debian)
+./build-all.sh RELEASE --nodeps
+```
+
+The script will:
+- Check for prerequisites (go, npm, yarn, rpmbuild)
+- Download source tarballs from GitHub
+- Build all three RPM packages
+- Display a summary with installation instructions
+
+#### Manual Build
+
+If you prefer to build packages individually:
+
+##### Setup Build Environment
 
 ```bash
 mkdir -p ~/rpmbuild/{SPECS,SOURCES}
 ```
 
-#### MinIO Server
+##### MinIO Server
 
 ```bash
 # Copy spec and source files
@@ -187,6 +212,24 @@ minio --version
 ```
 
 The `release_prefix` variable defaults to `RELEASE` and can be set to any value (e.g., INTERNAL, STAGING, PRODUCTION, etc.).
+
+## Checking for Updates
+
+Use the included update checker script to see if newer versions are available:
+
+```bash
+# Check for updates
+./check-updates.sh
+
+# Automatically update spec files to latest versions
+./check-updates.sh --update
+```
+
+The script will:
+- Query GitHub API for the latest release tags
+- Compare with versions in your spec files
+- Show what updates are available
+- Optionally update the spec files with new versions and commit IDs
 
 ## Key Changes from Original Specfiles
 
